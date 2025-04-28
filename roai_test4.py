@@ -13,7 +13,8 @@ from isaacsim.core.api.objects.cuboid import VisualCuboid
 import numpy as np
 from isaacsim.examples.interactive.user_examples.relay_task import RelayTask
 from isaacsim.examples.interactive.user_examples.hand_over_task import HandOverTask
-
+from omni.isaac.core.utils.stage import get_current_stage
+from pxr import PhysxSchema
 
 
 class RoaiTest4(RoaiBaseSample):
@@ -53,6 +54,7 @@ class RoaiTest4(RoaiBaseSample):
             world.add_task(task)
             self._tasks.append(task_name)
         
+
         return
 
     async def setup_post_load(self):
@@ -117,7 +119,6 @@ class RoaiTest4(RoaiBaseSample):
     def physics_step(self, step_size):
         current_observations = self._world.get_observations()
         current_task_name = self._tasks[self._current_task_index]
-        print(current_task_name)
         
         # RelayTask 실행
         if current_task_name == "start_task":
