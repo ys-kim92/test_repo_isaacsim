@@ -7,10 +7,66 @@ from isaacsim.robot.wheeled_robots.controllers.wheel_base_pose_controller import
 from isaacsim.robot.wheeled_robots.controllers.differential_controller import DifferentialController
 from isaacsim.core.api.tasks import BaseTask
 from isaacsim.core.utils.types import ArticulationAction
-from isaacsim.core.utils.string import find_unique_string_name
 from isaacsim.core.utils.prims import is_prim_path_valid
+from isaacsim.core.utils.string import find_unique_string_name
+from isaacsim.robot.manipulators.examples.franka import Franka
 from isaacsim.core.api.objects.cuboid import VisualCuboid
+from typing import Optional
+import isaacsim.core.api.tasks as tasks
 import numpy as np
+
+# 기존 패키지 상속 후 modify
+class PickPlaceExistingCube(tasks.PickPlace):
+    def __init__(
+        self,
+        name: str = "franka_pick_place",
+        cube_prim_path: Optional[str] = None,
+        cube_initial_position: Optional[np.ndarray] = None,
+        cube_initial_orientation: Optional[np.ndarray] = None,
+        target_position: Optional[np.ndarray] = None,
+        cube_size: Optional[np.ndarray] = None,
+        offset: Optional[np.ndarray] = None,
+    ):
+        super().__init__(
+            name=name,
+            cube_initial_position=cube_initial_position,
+            cube_initial_orientation=cube_initial_orientation,
+            target_position=target_position,
+            cube_size=cube_size,
+            offset=offset,
+        )
+        self._cube_prim_path = cube_prim_path  # 추가된 부분
+
+    def set_robot(self) -> Franka:
+        """[summary]
+
+        Returns:
+            Franka: [description]
+        """
+        franka_prim_path = find_unique_string_name(
+            initial_name="/World/Franka", is_unique_fn=lambda x: not is_prim_path_valid(x)
+        )
+        franka_robot_name = find_unique_string_name(
+            initial_name="my_franka", is_unique_fn=lambda x: not self.scene.object_exists(x)
+        )
+        return Franka(prim_path=franka_prim_path, name=franka_robot_name)
+
+    def set_up_scene(self, scene):
+        """Overriding to prevent creating a new cube."""
+        super().set_up_scene(scene)
+        
+        # 기존 PickPlace는 여기서 cube를 만들었을 것임
+        # 대신 우리는 이미 존재하는 cube를 찾아서 쓸 것임
+        self._cube = scene.get_object(self._cube_prim_path)
+        if self._cube is None:
+            raise RuntimeError(f"Cube at path {self._cube_prim_path} not found in the scene.")
+
+        # 로봇은 원래대로 생성
+        self._robot = self.set_robot()
+        scene.add(self._robot)
+        self._task_objects[self._robot.name] = self._robot
+        self._task_objects[self._cube.name] = self._cube  # 기존 cube도 등록
+        self._move_task_objects_to_their_frame()
 
 
 class HandOverTask(BaseTask):
@@ -33,10 +89,18 @@ class HandOverTask(BaseTask):
         target_pos = np.array([0.7, -0.3, 0.0515 / 2.0])
         if offset is not None:
             target_pos = target_pos + offset
-            
+            """
         self._pick_place_task = PickPlace(cube_initial_position=initial_pos,
                                          target_position=target_pos,
                                          offset=offset)
+        """
+        self._pick_place_task = PickPlaceExistingCube(
+                name=self.name + "_pickplace",     # 반드시 name을 넘겨야 함
+                cube_prim_path=self._cube_path,
+                target_position=target_pos,
+                offset=offset
+            )
+        
         return
 
     def set_up_scene(self, scene):

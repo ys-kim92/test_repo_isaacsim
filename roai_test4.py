@@ -46,7 +46,7 @@ class RoaiTest4(RoaiBaseSample):
                 name=task_name,
                 offset=np.array([0.5, -0.5 * (1+i), 0]),  # X 축으로 배치
                 is_first=is_first,
-                cube_path="/World/cube" if is_first else None,
+                cube_path="/World/cube",
                 previous_robot=previous_robot,
                 next_robot=next_robot
             )
