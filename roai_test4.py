@@ -18,7 +18,7 @@ from isaacsim.examples.interactive.user_examples.hand_over_task import HandOverT
 
 class RoaiTest4(RoaiBaseSample):
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__() #test
         self._current_task_index = 0  # 현재 실행 중인 작업 인덱스
         self._tasks = []
         self._num_of_handover_tasks = 3  # HandoverTask 개수
