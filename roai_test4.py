@@ -18,7 +18,7 @@ from isaacsim.examples.interactive.user_examples.hand_over_task import HandOverT
 
 class RoaiTest4(RoaiBaseSample):
     def __init__(self) -> None:
-        super().__init__() #test
+        super().__init__()
         self._current_task_index = 0  # 현재 실행 중인 작업 인덱스
         self._tasks = []
         self._num_of_handover_tasks = 3  # HandoverTask 개수
@@ -73,6 +73,16 @@ class RoaiTest4(RoaiBaseSample):
         self._franka_controllers.append(self._franka_controller)
         self._frankas.append(self._franka)
         
+        # Jetbot 컨트롤러 설정
+        self._jetbot_controller = WheelBasePoseController(
+            name="cool_controller",
+            open_loop_wheel_controller=DifferentialController(
+                name="simple_control",
+                wheel_radius=0.03, 
+                wheel_base=0.1125
+            )
+        )
+
         # HandoverTask의 Franka 컨트롤러 추가
         for i in range(self._num_of_handover_tasks):
             task_name = f"handover_task_{i}"
@@ -87,16 +97,6 @@ class RoaiTest4(RoaiBaseSample):
             
             self._franka_controllers.append(controller)
             self._frankas.append(franka)
-            
-        # Jetbot 컨트롤러 설정
-        self._jetbot_controller = WheelBasePoseController(
-            name="cool_controller",
-            open_loop_wheel_controller=DifferentialController(
-                name="simple_control",
-                wheel_radius=0.03, 
-                wheel_base=0.1125
-            )
-        )
         
         self._world.add_physics_callback("sim_step", callback_fn=self.physics_step)
         await self._world.play_async()
@@ -104,9 +104,9 @@ class RoaiTest4(RoaiBaseSample):
 
     async def setup_post_reset(self):
         # 모든 컨트롤러 리셋
-        self._franka_controller.reset()
         self._jetbot_controller.reset()
-        
+
+        self._franka_controller.reset()
         for controller in self._franka_controllers:
             controller.reset()
             
@@ -117,6 +117,7 @@ class RoaiTest4(RoaiBaseSample):
     def physics_step(self, step_size):
         current_observations = self._world.get_observations()
         current_task_name = self._tasks[self._current_task_index]
+        print(current_task_name)
         
         # RelayTask 실행
         if current_task_name == "start_task":
@@ -130,7 +131,7 @@ class RoaiTest4(RoaiBaseSample):
                     )
                 )
             elif current_observations["task_event"] == 1:
-                # Jetbot이 도착했으니 정지하고, Franka가 큐브를 집음
+                # Jetbot이 도착했으니 후진하고, Franka가 큐브를 집음
                 self._jetbot.apply_wheel_actions(ArticulationAction(joint_velocities=[-8, -8]))
                 
                 actions = self._franka_controller.forward(
@@ -140,7 +141,7 @@ class RoaiTest4(RoaiBaseSample):
                 )
                 self._franka.apply_action(actions)
             elif current_observations["task_event"] == 2:
-                # Franka가 큐브를 목표 위치에 놓음
+                # Jetbot 정지, Franka가 큐브를 목표 위치에 놓음
                 self._jetbot.apply_wheel_actions(ArticulationAction(joint_velocities=[0.0, 0.0]))
 
                 actions = self._franka_controller.forward(
@@ -191,9 +192,9 @@ class RoaiTest4(RoaiBaseSample):
         return
 
     def world_cleanup(self):
+        self._current_task_index = 0
         self._tasks = []
         self._franka_controllers = []
         self._frankas = []
         self._cubes = []
-        self._current_task_index = 0
         return

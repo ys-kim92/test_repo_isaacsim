@@ -1,16 +1,16 @@
-from isaacsim.examples.interactive.base_sample import RoaiBaseSample
 from isaacsim.robot.manipulators.examples.franka.tasks import PickPlace
-from isaacsim.robot.manipulators.examples.franka.controllers import PickPlaceController
 from isaacsim.robot.wheeled_robots.robots import WheeledRobot
 from isaacsim.core.utils.nucleus import get_assets_root_path
-from isaacsim.robot.wheeled_robots.controllers.wheel_base_pose_controller import WheelBasePoseController
-from isaacsim.robot.wheeled_robots.controllers.differential_controller import DifferentialController
 from isaacsim.core.api.tasks import BaseTask
-from isaacsim.core.utils.types import ArticulationAction
-from isaacsim.core.utils.string import find_unique_string_name
-from isaacsim.core.utils.prims import is_prim_path_valid
-from isaacsim.core.api.objects.cuboid import VisualCuboid
 import numpy as np
+
+#from isaacsim.examples.interactive.base_sample import RoaiBaseSample
+#from isaacsim.robot.manipulators.examples.franka.controllers import PickPlaceController
+#from isaacsim.robot.wheeled_robots.controllers.wheel_base_pose_controller import WheelBasePoseController
+#from isaacsim.robot.wheeled_robots.controllers.differential_controller import DifferentialController
+#from isaacsim.core.utils.types import ArticulationAction
+#from isaacsim.core.api.objects.cuboid import VisualCuboid
+
 
 class RelayTask(BaseTask):
     def __init__(
@@ -28,7 +28,7 @@ class RelayTask(BaseTask):
 
     def set_up_scene(self, scene):
         super().set_up_scene(scene)
-        self._pick_place_task.set_up_scene(scene)
+
         assets_root_path = get_assets_root_path()
         jetbot_asset_path = assets_root_path + "/Isaac/Robots/Jetbot/jetbot.usd"
         self._jetbot = scene.add(
@@ -41,6 +41,8 @@ class RelayTask(BaseTask):
                 position=np.array([0, 0.3, 0]),
             )
         )
+
+        self._pick_place_task.set_up_scene(scene)
         pick_place_params = self._pick_place_task.get_params()
         self._franka = scene.get_object(pick_place_params["robot_name"]["value"])
         self._franka.set_world_pose(position=np.array([1.0, 0, 0]))
